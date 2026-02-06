@@ -30,6 +30,7 @@ type Schema = z.infer<typeof schema>
 
 const isLoading = ref<boolean>(false)
 const errorMess = ref<string | null>(null);
+const showPassword = ref<boolean>(false);
 const state = reactive<Partial<Schema>>({
     email: undefined,
     password: undefined
@@ -89,8 +90,17 @@ const Submit = async (event: FormSubmitEvent<Schema>) => {
                 <FormGroupComp label="Email" name="email" required type="email" icon="i-lucide-mail"
                     placeholder="Enter your email" v-model="state.email" />
 
-                <FormGroupComp label="Password" name="password" required type="password" icon="i-lucide-key-round"
-                    placeholder="*******" v-model="state.password" />
+                <div class="w-full relative">
+                    <FormGroupComp label="Password" name="password" required :type="showPassword ? 'text' : 'password'" icon="i-lucide-key-round"
+                        placeholder="*******" v-model="state.password" />
+                    <UButton 
+                        @click="showPassword = !showPassword"
+                        :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                        variant="ghost"
+                        class="absolute right-2 top-8 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        size="sm"
+                    />
+                </div>
 
                 <div class="flex items-center self-start gap-3 justify-between w-full text-gray-700 dark:text-gray-300">
                     <div class="flex items-center gap-3">

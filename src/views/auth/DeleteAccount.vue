@@ -30,6 +30,8 @@ type Schema = z.infer<typeof schema>
 
 const isLoading = ref<boolean>(false)
 const errorMess = ref<string | null>(null);
+const showPassword = ref<boolean>(false);
+const showConfirmPassword = ref<boolean>(false);
 const state = reactive<Partial<Schema>>({
     password: undefined,
     confirm: undefined
@@ -71,11 +73,30 @@ const Submit = async (event: FormSubmitEvent<Schema>) => {
                 <h1 class="">Change password.</h1>
             </div>
             <errorMessage v-if="errorMess" :message="errorMess" />
-            <FormGroupComp label="Password" name="password" required type="password" icon="i-lucide-lock"
-                placeholder="************" v-model="state.password" />
+            
+            <div class="w-full relative">
+                <FormGroupComp label="Password" name="password" required :type="showPassword ? 'text' : 'password'" icon="i-lucide-lock"
+                    placeholder="************" v-model="state.password" />
+                <UButton 
+                    @click="showPassword = !showPassword"
+                    :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                    variant="ghost"
+                    class="absolute right-2 top-8 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    size="sm"
+                />
+            </div>
 
-            <FormGroupComp label="Confirm Password" name="confirm" required type="password" icon="i-lucide-lock-keyhole"
-                placeholder="************" v-model="state.confirm" />
+            <div class="w-full relative">
+                <FormGroupComp label="Confirm Password" name="confirm" required :type="showConfirmPassword ? 'text' : 'password'"
+                    icon="i-lucide-lock-keyhole" placeholder="************" v-model="state.confirm" />
+                <UButton 
+                    @click="showConfirmPassword = !showConfirmPassword"
+                    :icon="showConfirmPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                    variant="ghost"
+                    class="absolute right-2 top-8 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    size="sm"
+                />
+            </div>
 
             <div class="flex items-center self-start gap-3 justify-end w-full">
                 <div class="self-end">

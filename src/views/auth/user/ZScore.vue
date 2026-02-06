@@ -76,8 +76,11 @@ const submitFilter = async () => {
     }
     if (dateFilter.value === 'custom') {
         if (customFrom.value && customTo.value) {
-            router.replace({ query: { filter: 'custom', from: new Date(customFrom.value).toISOString(), to: new Date(customTo.value).toISOString() } });
-            await getBpCustom(customFrom.value.toISOString(), customTo.value.toISOString());
+            const fromDate = customFrom.value instanceof Date ? customFrom.value : new Date(customFrom.value);
+            const toDate = customTo.value instanceof Date ? customTo.value : new Date(customTo.value);
+            
+            router.replace({ query: { filter: 'custom', from: fromDate.toISOString(), to: toDate.toISOString() } });
+            data.value = await getBpCustom(fromDate.toISOString(), toDate.toISOString());
             return
         }
     }

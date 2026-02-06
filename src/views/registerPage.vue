@@ -16,13 +16,14 @@ const schema = z.object({
     email: z.string().email(),
     birthday: z.string().date(),
     sex: z.string(),
-    contact: z.string().min(11).max(12),
+    contact: z.string().regex(/^09\d{9}$/, "Contact number must start with 09 and be exactly 11 digits"),
     password: z.string().min(8),
     confirm: z.string().min(8),
+    role: z.string().optional()
 }).refine((data) => data.password === data.confirm, {
     message: "Passwords don't match",
     path: ["confirm"],
-}); 
+});
 
 interface errorType {
     response: {
@@ -36,6 +37,8 @@ type Schema = z.infer<typeof schema>
 
 const isLoading = ref<boolean>(false)
 const errorMess = ref<string | null>(null);
+const showPassword = ref<boolean>(false);
+const showConfirmPassword = ref<boolean>(false);
 const state = reactive<Partial<Schema>>({
     name: undefined,
     email: undefined,
@@ -110,14 +113,32 @@ const Submit = async (event: FormSubmitEvent<Schema>) => {
                         :items="['Male', 'Female']" />
                 </div>
 
-                <FormGroupComp label="Contact" name="contact" required type="text" icon="i-lucide-contact"
-                    placeholder="Enter your contact number" v-model="state.contact" />
+                <FormGroupComp label="Contact" name="contact" required type="tel" icon="i-lucide-contact"
+                        placeholder="Enter your contact number" v-model="state.contact" :maxlength="11" />
 
-                <FormGroupComp label="Password" name="password" required type="password" icon="i-lucide-lock"
-                    placeholder="Enter your password" v-model="state.password" />
+                <div class="w-full relative">
+                    <FormGroupComp label="Password" name="password" required :type="showPassword ? 'text' : 'password'" icon="i-lucide-lock"
+                        placeholder="Enter your password" v-model="state.password" />
+                    <UButton 
+                        @click="showPassword = !showPassword"
+                        :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                        variant="ghost"
+                        class="absolute right-2 top-8 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        size="sm"
+                    />
+                </div>
 
-                <FormGroupComp label="Confirm Password" name="confirm" required type="password"
-                    icon="i-lucide-lock-keyhole" placeholder="Confirm your password" v-model="state.confirm" />
+                <div class="w-full relative">
+                    <FormGroupComp label="Confirm Password" name="confirm" required :type="showConfirmPassword ? 'text' : 'password'"
+                        icon="i-lucide-lock-keyhole" placeholder="Confirm your password" v-model="state.confirm" />
+                    <UButton 
+                        @click="showConfirmPassword = !showConfirmPassword"
+                        :icon="showConfirmPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                        variant="ghost"
+                        class="absolute right-2 top-8 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        size="sm"
+                    />
+                </div>
 
                 <div class="flex justify-end w-full">
                     <UButton loading-icon="i-lucide-loader-circle" :disabled="isLoading" :loading="isLoading"

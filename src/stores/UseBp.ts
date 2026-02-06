@@ -55,7 +55,7 @@ export const useBpStore = defineStore("bp", () => {
     to: string | undefined
   ) => {
     try {
-      const { data } = await useAxios.get(`/auth/bp?from=${from}&to${to}`);
+      const { data } = await useAxios.get(`/auth/bp?filter=custom&from=${from}&to=${to}`);
       if (!data) throw new Error("No data found");
       console.log(data);
       return data;
