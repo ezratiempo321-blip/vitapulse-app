@@ -81,7 +81,7 @@ const columns = computed(() => {
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: true,
-                    timeZone: "UTC"
+                    timeZone: "Asia/Manila"
                 })
             }
         },

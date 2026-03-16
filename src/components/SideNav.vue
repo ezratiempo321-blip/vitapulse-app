@@ -71,6 +71,11 @@ const userItems = ref<NavigationMenuItem[][]>([
             icon: 'i-lucide-logs',
             to: { name: 'activiy-user' }
         },
+        {
+            label: 'Device Registration',
+            icon: 'i-lucide-cpu',
+            to: { name: 'device-registration' }
+        },
     ]
 ])
 

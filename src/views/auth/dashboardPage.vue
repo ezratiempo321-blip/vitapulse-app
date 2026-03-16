@@ -4,22 +4,16 @@ import {
   onBeforeUnmount,
   ref,
   defineAsyncComponent,
-  computed,
 } from "vue";
 import SkeletonLoader from "@/components/SkeletonLoader..vue";
 import ErrorComp from "@/components/ErrorComp.vue";
 import userLayout from "@/layouts/userLayout.vue";
 import { useUserStore } from "@/stores/useUser";
-import { useBpStore } from "@/stores/UseBp";
-import { getBpAndPulseByAge } from "@/utils/BpByAge";
-import type { User, bpPulse } from "@/types/types";
+import type { User } from "@/types/types";
 import { getTheAge } from "@/utils/getTheAge";
-import { useToast } from "@nuxt/ui/runtime/composables/useToast.js";
-import { setUpWebSocketConnection as wb } from "@/composables/websockets";
+import { useAxios } from '@/axios/useAxios';
 
-const toast = useToast();
 const { getUser } = useUserStore();
-const { postBp } = useBpStore();
 
 const AsyncCardComp = defineAsyncComponent({
   loader: () => import("@/components/CardComp.vue"),
@@ -42,7 +36,6 @@ const AsyncInforList = defineAsyncComponent({
   errorComponent: ErrorComp,
   timeout: 3000,
 });
-
 const AsyncPage = defineAsyncComponent({
   loader: () => import("@/views/auth/user/historicalData.vue"),
   loadingComponent: SkeletonLoader,
@@ -51,84 +44,41 @@ const AsyncPage = defineAsyncComponent({
   timeout: 3000,
 });
 
-let lastSaved = Date.now();
-
 const user = ref<User | null>(null);
-const data = ref<bpPulse | null>(null);
+const data = ref<{
+  systolic: number;
+  diastolic: number;
+  pulse: number;
+  bpStatus: string;
+  pulseStatus: string;
+  clinicalBpLabel: string;
+  timestamp: string;
+} | null>(null);
 
-let ws: WebSocket | null = null;
-const setUpWebSocketConnection = () => {
-  // ws = new WebSocket('wss://vitapulse-api.onrender.com/api/auth/ws/bp');
-  ws = wb("bp");
+let interval: ReturnType<typeof setInterval> | null = null;
 
-  ws.onopen = (event) => {
-    console.log("WebSocket connection established");
-  };
-  ws.onmessage = async (event) => {
-    const readings = JSON.parse(event.data);
-    data.value = readings;
-    const now = Date.now();
-    if (
-      readings.diastolic !== 254 &&
-      readings?.systolic !== 254 &&
-      readings.pulseRate !== 254
-    ) {
-      if (now - lastSaved >= 3000) {
-        const issaved = await postBp(
-          readings.systolic,
-          readings.diastolic,
-          readings.pulseRate,
-          readings.date,
-        );
-        if (issaved) {
-          toast.add({
-            title: "Saved",
-            description: "Readings saved",
-            color: "success",
-          });
-          lastSaved = now;
-        } else {
-          toast.add({
-            title: "Skipped",
-            description: "Data is already saved",
-            color: "info",
-          });
-        }
-      }
-    }
-  };
+const fetchLatestBp = async () => {
+  try {
+    const res = await useAxios.get("/auth/bp/latest");
 
-  ws.onclose = () => {
-    console.log("Websocket connection has been closed");
-  };
-  ws.onerror = (error) => {
-    console.log(error);
-  };
-
-  return ws;
+    data.value = res.data;
+  } catch (error) {
+    data.value = null;
+  }
 };
 
 onMounted(async () => {
   user.value = await getUser();
-  setUpWebSocketConnection();
+  await fetchLatestBp();
+  interval = setInterval(fetchLatestBp, 5000);
 });
 
 onBeforeUnmount(() => {
-  ws?.close();
-  ws = null;
-  // if (ws && ws.readyState === WebSocket.OPEN) {
-
-  //     ('WebSocket manually closed on unmount');
-  // }
-});
-
-const reconnect = () => {
-  if (ws) {
-    ws.close();
-    ws = null;
+  if (interval) {
+    clearInterval(interval);
+    interval = null;
   }
-  setUpWebSocketConnection();
-};
+});
 </script>
 
 <template>
@@ -138,24 +88,22 @@ const reconnect = () => {
         <AsyncInforList :auth="user" />
       </div>
 
-      <h1 class="text-3xl my-10 font-bold self-start">Real-time monitor</h1>
+      <h1 class="text-3xl my-10 font-bold self-start">Latest Reading</h1>
       <div
-        v-if="
-          data?.diastolic && data?.systolic && data?.pulseRate && user?.birthday
-        "
+        v-if="data && user?.birthday"
         class="my-5 flex lg:flex-nowrap flex-wrap w-full gap-4"
       >
         <AsyncCardComp
           :bpAndPulse="{
-            systolic: data?.systolic,
-            diastolic: data?.diastolic,
+            systolic: data.systolic,
+            diastolic: data.diastolic,
             age: Number(getTheAge(String(user?.birthday))),
-            pulse: data?.pulseRate,
+            pulse: data.pulse,
           }"
         />
         <AsyncPulseRateCard
           :PulseRate="{
-            pulse_rate: data.pulseRate,
+            pulse_rate: data.pulse,
             age: Number(getTheAge(String(user?.birthday))),
           }"
         />
@@ -166,21 +114,13 @@ const reconnect = () => {
       >
         <div class="flex flex-col">
           <p class="text-lg font-semibold flex gap-3 items-center">
-            <UIcon name="i-lucide-unplug" class="size-5" />Real-time connection
-            lost
+            <UIcon name="i-lucide-activity" class="size-5" /> No recent readings
           </p>
           <ul class="list-item list-disc ms-15">
-            <li class="">Check your internet connection</li>
-            <li>Check your device</li>
+            <li>No BP records found</li>
+            <li>Please take a measurement first</li>
           </ul>
         </div>
-
-        <UButton
-          @click="reconnect"
-          class="bg-amber-300 ms-auto text-black"
-          icon="i-lucide-plug-zap"
-          >Reconnect
-        </UButton>
       </div>
     </UContainer>
 

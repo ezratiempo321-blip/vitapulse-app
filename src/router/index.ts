@@ -86,6 +86,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Settings', requiresAuth: true, requiresVerified: true }
   },
   {
+    path: '/device-registration',
+    name: 'device-registration',
+    component: () => import('@/views/deviceRegistration.vue'),
+    meta: { title: 'Device Registration', requiresAuth: true, requiresVerified: true }
+  },
+  {
     path: '/admin',
     name: 'admin',
     component: () => import('@/views/auth/admin/dashboard.vue'),
